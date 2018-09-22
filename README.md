@@ -1,4 +1,3 @@
-
 #include "pch.h"
 #include <iostream>
 using namespace std;
@@ -121,3 +120,4 @@ void nhap(MHnode &l, int n)
 		AddTail(l, p);
 	}
 }
+
