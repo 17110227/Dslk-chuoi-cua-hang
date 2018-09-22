@@ -1,4 +1,4 @@
-# Danh sach lien ket MAT HANG
+
 #include "pch.h"
 #include <iostream>
 using namespace std;
