@@ -1,0 +1,338 @@
+#include "pch.h"
+#include <iostream>
+using namespace std;
+#include "stdio.h";
+#include <conio.h>;
+#include <string.h>;
+typedef struct mathang                //Lưu tên các mặt hàng có trong chuỗi cửa hàng và giá tiền
+{
+	char ten[100];
+	int giatien;
+	int mamh;                    
+}MH;
+typedef struct monhang
+{
+	MH Info;
+	monhang *next;
+};
+typedef struct MHlist
+{
+	monhang *head;
+	monhang *tail;
+};
+//Hàm tạo danh sách
+void CreateList(MHlist &l);
+//Hàm tạo 1 phần tử của danh sách
+monhang *GetNode(MH a);
+//Hàm thêm đầu, cuối của danh sách
+void AddHead(MHlist &L, monhang *p);
+void AddTail(MHlist &L, monhang *p);
+//Hàm nhập, in thông tin của mỗi mặt hàng
+void nhapmathang(MH &a);
+void inmathang(MH a);
+//Hàm nhập danh sách
+void nhaplist(MHlist &l, int n);  
+//Hàm đưa ra các lựa chọn việc cần làm trong danh sách
+void Choices(MHlist &L, MH a[], int &n);
+//Các lựa chọn công việc
+void xuatlist(MHlist l); //Công việc 1
+void xuatdau(MHlist l); //Công việc 2
+void xuatcuoi(MHlist l); //Công việc 3
+void xoadau(MHlist &l);  //Công việc 4
+void xoacuoi(MHlist &l); //Công việc 5
+void xoatheomamh(MHlist &L, int x, MH a[], int &n);  //Công việc 6
+void timtheoma(MHlist &L, int n);  //Công việc 7
+void sapxeptheogiatien(MHlist &L); //Công việc 8
+int main()
+{
+	MH a[100];
+	int n;
+	cout << "Nhap so mat hang can quan li: ";
+	cin >> n;
+	MHlist L;
+	CreateList(L);
+	nhaplist(L, n);
+	Choices(L, a, n);
+}
+void nhapmathang(MH &a)
+{
+	cout << "Nhap ten mat hang: ";
+	cin.ignore();
+	cin.getline(a.ten, 9);
+	cout << "Nhap gia tien: ";
+	cin >> a.giatien;
+	cout << "Nhap ma mat hang: ";
+	cin >> a.mamh;
+}
+void inmathang(MH a)
+{
+	cout << endl;
+	cout << "Ten mat hang: " << a.ten << endl;
+	cout << "Ma so mat hang la: " << a.mamh << endl;
+	cout << "Gia tien la: " << a.giatien << endl;
+	cout << endl;
+}
+void CreateList(MHlist &l)
+{
+	l.head = l.tail = NULL;
+}
+void AddHead(MHlist &L, monhang *p)
+{
+	if (L.head == NULL)
+	{
+		L.head = L.tail = p;
+	}
+	else
+	{
+		p->next = L.head;
+		L.head = p;
+	}
+}
+void AddTail(MHlist &L, monhang *p)
+{
+	if (L.head == NULL)
+	{
+		L.head = L.tail = p;
+	}
+	else
+	{
+		L.tail->next = p;
+		L.tail = p;
+	}
+}
+monhang *GetNode(MH a)
+{
+	monhang *p = new monhang;
+	if (p == NULL)
+	{
+		return NULL;
+	}
+	p->Info = a;
+	p->next = NULL;
+	return p;
+}
+void nhaplist(MHlist &l, int n)
+{
+	MH x[100];
+	monhang *p;
+	for (int i = 1; i <= n; i++)
+	{
+		cout << "Nhap mat hang thu " << i << " :" << endl;
+		nhapmathang(x[i]);
+		p = GetNode(x[i]);
+		AddTail(l, p);
+		cout << endl;
+	}
+}
+void Choices(MHlist &L, MH a[], int &n)
+{
+	cout << "Day la danh sach lien ket dung de quan li cac mat hang cua chuoi cua hang. Moi ban chon 1 trong cac cong viec ma ban muon thuc hien voi danh sach nay: " << endl;
+	cout << "1. In danh sach mat hang vua nhap." << endl;
+	cout << "2. Xuat mat hang o dau danh sach." << endl;
+	cout << "3. Xuat mat hang o cuoi danh sach." << endl;
+	cout << "4. Xoa mat hang o dau danh sach" << endl;
+	cout << "5. Xoa mat hang o cuoi danh sach" << endl;
+	cout << "6. Xoa mat hang theo ma mat hang" << endl;
+	cout << "7. Tim kiem mat hang theo ma mat hang" << endl;
+	cout << "8. Sap xep danh sach theo gia tien tu cao den thap" << endl;
+	int n1;
+	do {
+		cout << "Ban chon cong viec so may: ";
+		cin >> n1;
+		switch (n1)
+		{
+		case 1:
+		{
+			xuatlist(L);
+			cout << endl;
+			break;
+		}
+		case 2:
+		{
+			xuatdau(L);
+			cout << endl;
+			break;
+		}
+		case 3:
+		{
+			xuatcuoi(L);
+			cout << endl;
+			break;
+		}
+		case 4:
+		{
+			xoadau(L);
+			cout << endl;
+			break;
+		}
+		case 5:
+		{
+			xoacuoi(L);
+			cout << endl;
+			break;
+		}
+		case 6:
+		{
+			int x;
+			cout << "Nhap ma mat hang muon xoa: ";
+			cin >> x;
+			xoatheomamh(L, x, a, n);
+			cout << endl;
+			break;
+		}
+		case 7:
+		{
+			int x;
+			cout << "Nhap ma mat hang muon tim: ";
+			cin >> x;
+			timtheoma(L, x);
+			cout << endl;
+			break;
+		}
+		case 8:
+		{
+			sapxeptheogiatien(L);
+			xuatlist(L);
+			break;
+		}
+		default:
+			cout << "Gia tri khong hop le" << endl;
+			break;
+		}
+		cout << "*****Nhan ESC de thoat.*****\n";
+		cout << "-----nhan ENTER de tiep tuc chon lai.-----\n";
+
+	} while (_getch() != 27);
+}
+void xuatdau(MHlist l)
+{
+	monhang *p;
+	p = l.head;
+	inmathang(p->Info);
+	delete p;
+}
+void xuatcuoi(MHlist l)
+{
+	monhang *p;
+	p = l.tail;
+	inmathang(p->Info);
+}
+void xuatlist(MHlist l)
+{
+	monhang *p;
+	p = l.head;
+	while (p != NULL)
+	{
+		inmathang(p->Info);
+		p = p->next;
+	}
+	delete p;
+}
+void xoadau(MHlist &l)
+{
+	if (l.head == NULL) cout << "Danh sach rong";
+	else
+	{
+		monhang *p = l.head;
+		if (l.head == l.tail) l.head = l.tail = NULL;
+		else l.head = l.head->next;
+		delete p;
+	}
+	xuatlist(l);
+}
+void xoacuoi(MHlist &l)
+{
+	if (l.head == NULL) cout << "Danh sach rong";
+	else
+	{
+		monhang *p = l.tail;
+		if (l.head == l.tail) l.head = l.tail = NULL;
+		else
+		{
+			monhang *q;
+			for (q = l.head; q->next != l.tail; q = q->next)
+			{
+				q->next = NULL;
+				l.tail = q;
+			}
+			delete p;
+		}
+		xuatlist(l);
+	}
+}
+void XoaNode(MHlist &l, monhang *q)
+{
+	monhang *p = q->next;
+	if (p == NULL) cout << "Khong xoa duoc!";
+	else
+	{
+		q->next = p->next;
+		if (p == l.tail) l.tail = q;
+		delete p;
+	}
+}
+void xoatheomamh(MHlist &L, int x, MH a[], int &n)
+{
+	monhang *p = L.head;
+	monhang *q = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.mamh == x)
+		{
+			if (p == L.head) xoadau(L);
+			else if (p == L.tail) xoacuoi(L);
+			else 
+			{
+				XoaNode(L, q);
+				xuatlist(L);
+			}
+			break;
+		}
+		q = p;
+		p = p->next;
+	}
+}
+void timtheoma(MHlist &L, int n)
+{
+	monhang *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.mamh == n)
+		{
+			cin.ignore();
+			inmathang(p->Info);
+			break;
+		}
+		p = p->next;
+	}
+}
+void sapxeptheogiatien(MHlist &l)
+{
+	MHlist l1, l2;
+	monhang *tag, *p;
+	if (l.head == l.tail) return;
+	CreateList(l1);
+	CreateList(l2);
+	tag = l.head;
+	l.head = l.head->next; 
+	tag->next = NULL;
+	while (l.head != NULL) 
+	{
+		p = l.head;
+		l.head = l.head->next;
+		p->next = NULL;
+		if (p->Info.giatien <= tag->Info.giatien) AddHead(l1, p);
+		else AddHead(l2, p);
+	}
+	sapxeptheogiatien(l1); 
+	sapxeptheogiatien(l2);
+	if (l1.head != NULL) 
+	{ 
+		l.head = l1.head;
+		l1.tail->next = tag;
+	} 
+	else l.head = tag;
+	tag->next = l2.head;
+	if (l2.head != NULL) l.tail = l2.tail;
+	else l.tail = tag;
+}
