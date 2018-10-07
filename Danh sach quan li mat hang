@@ -24,9 +24,11 @@ typedef struct MHlist
 void CreateList(MHlist &l);
 //Hàm tạo 1 phần tử của danh sách
 monhang *GetNode(MH a);
-//Hàm thêm đầu, cuối của danh sách
-void AddHead(MHlist &L, monhang *p);
+//Hàm phụ
+void xoadau(MHlist &l);  
+void xoacuoi(MHlist &l); 
 void AddTail(MHlist &L, monhang *p);
+void AddHead(MHlist &L, monhang *p);
 //Hàm nhập, in thông tin của mỗi mặt hàng
 void nhapmathang(MH &a);
 void inmathang(MH a);
@@ -36,13 +38,9 @@ void nhaplist(MHlist &l, int n);
 void Choices(MHlist &L, MH a[], int &n);
 //Các lựa chọn công việc
 void xuatlist(MHlist l); //Công việc 1
-void xuatdau(MHlist l); //Công việc 2
-void xuatcuoi(MHlist l); //Công việc 3
-void xoadau(MHlist &l);  //Công việc 4
-void xoacuoi(MHlist &l); //Công việc 5
-void xoatheomamh(MHlist &L, int x, MH a[], int &n);  //Công việc 6
-void timtheoma(MHlist &L, int n);  //Công việc 7
-void sapxeptheogiatien(MHlist &L); //Công việc 8
+void xoatheomamh(MHlist &L, int x, MH a[], int &n);  //Công việc 2
+void timtheoma(MHlist &L, int n);  //Công việc 3
+void sapxeptheogiatien(MHlist &L); //Công việc 4
 int main()
 {
 	MH a[100];
@@ -128,13 +126,9 @@ void Choices(MHlist &L, MH a[], int &n)
 {
 	cout << "Day la danh sach lien ket dung de quan li cac mat hang cua chuoi cua hang. Moi ban chon 1 trong cac cong viec ma ban muon thuc hien voi danh sach nay: " << endl;
 	cout << "1. In danh sach mat hang vua nhap." << endl;
-	cout << "2. Xuat mat hang o dau danh sach." << endl;
-	cout << "3. Xuat mat hang o cuoi danh sach." << endl;
-	cout << "4. Xoa mat hang o dau danh sach" << endl;
-	cout << "5. Xoa mat hang o cuoi danh sach" << endl;
-	cout << "6. Xoa mat hang theo ma mat hang" << endl;
-	cout << "7. Tim kiem mat hang theo ma mat hang" << endl;
-	cout << "8. Sap xep danh sach theo gia tien tu cao den thap" << endl;
+	cout << "2. Xoa mat hang theo ma mat hang." << endl;
+	cout << "3. Tim kiem mat hang theo ma mat hang" << endl;
+	cout << "4. Sap xep danh sach theo gia tien tu cao den thap" << endl;
 	int n1;
 	do {
 		cout << "Ban chon cong viec so may: ";
@@ -149,30 +143,6 @@ void Choices(MHlist &L, MH a[], int &n)
 		}
 		case 2:
 		{
-			xuatdau(L);
-			cout << endl;
-			break;
-		}
-		case 3:
-		{
-			xuatcuoi(L);
-			cout << endl;
-			break;
-		}
-		case 4:
-		{
-			xoadau(L);
-			cout << endl;
-			break;
-		}
-		case 5:
-		{
-			xoacuoi(L);
-			cout << endl;
-			break;
-		}
-		case 6:
-		{
 			int x;
 			cout << "Nhap ma mat hang muon xoa: ";
 			cin >> x;
@@ -180,7 +150,7 @@ void Choices(MHlist &L, MH a[], int &n)
 			cout << endl;
 			break;
 		}
-		case 7:
+		case 3:
 		{
 			int x;
 			cout << "Nhap ma mat hang muon tim: ";
@@ -189,7 +159,7 @@ void Choices(MHlist &L, MH a[], int &n)
 			cout << endl;
 			break;
 		}
-		case 8:
+		case 4:
 		{
 			sapxeptheogiatien(L);
 			xuatlist(L);
@@ -203,19 +173,6 @@ void Choices(MHlist &L, MH a[], int &n)
 		cout << "-----nhan ENTER de tiep tuc chon lai.-----\n";
 
 	} while (_getch() != 27);
-}
-void xuatdau(MHlist l)
-{
-	monhang *p;
-	p = l.head;
-	inmathang(p->Info);
-	delete p;
-}
-void xuatcuoi(MHlist l)
-{
-	monhang *p;
-	p = l.tail;
-	inmathang(p->Info);
 }
 void xuatlist(MHlist l)
 {
