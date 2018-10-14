@@ -1,0 +1,279 @@
+#include "pch.h"
+#include <iostream>
+using namespace std;
+#include "stdio.h";
+#include <conio.h>;
+#include <string.h>;
+typedef struct nhanvien
+{
+	char ten[50]; //Họ tên nhân viên
+	int msnv;     //Mã nhân viên
+	int msch;     //Mã cửa hàng nhân viên đó làm
+	int h;    //Số giờ nhân viên làm việc trong 1 tháng
+	int luong; //Tiền lương của nhân viên trong tháng đó
+}NV;
+typedef struct nv
+{
+	NV Info;
+	nv *next;
+};
+typedef struct NVlist
+{
+	nv *head;
+	nv *tail;
+};
+//Hàm tạo danh sách
+void CreateList(NVlist &l);
+//Hàm tạo 1 phần tử của danh sách
+nv *GetNode(NV a);
+//Hàm phụ:
+void nhaplist(NVlist &l, int n);
+void AddTailNV(NVlist &L, nv *p);
+void nhapnv(NV &a);
+void tinhtienluong(NVlist &L);
+void xoanhanviendau(NVlist &l);
+void xoanhanviencuoi(NVlist &l);
+void XoaNV(NVlist &l, nv *q);
+//Hàm chính:
+void inNVlist(NVlist l); //Xuất ra danh sách nhân viên
+void timnvlamnhieunhat(NVlist L); //Tìm nhân viên có số giờ làm việc nhiều nhất trong tháng để thưởng
+void tinhluongtheoma(NVlist &L, int manv);//Tính lương cho nhân viên nào đó
+void chuyennhanvien(NVlist &L, int mach, int manv);// Chuyển nhân viên sang chi nhánh khác
+void xoanhanvienthoiviec(NVlist &L, int manv);  //Xóa nhân viên thôi việc
+void tinhgiolam(NVlist &L, int manv, int h);       //Tính giờ làm cho nhân viên
+int main()
+{
+	NV a[100];
+	NVlist L;
+	CreateList(L);
+	nhaplist(L, 2);
+	tinhgiolam(L, 2, 4);
+	tinhtienluong(L);
+	//inNVlist(L);
+	tinhluongtheoma(L, 2);
+	chuyennhanvien(L, 1, 3);
+}
+void CreateList(NVlist &l)
+{
+	l.head = l.tail = NULL;
+}
+nv *GetNode(NV a)
+{
+	nv *p = new nv;
+	if (p == NULL)
+	{
+		return NULL;
+	}
+	p->Info = a;
+	p->next = NULL;
+	return p;
+}
+void AddTailNV(NVlist &L, nv *p)
+{
+	if (L.head == NULL)
+	{
+		L.head = L.tail = p;
+	}
+	else
+	{
+		L.tail->next = p;
+		L.tail = p;
+	}
+}
+void nhapnv(NV &a)
+{
+	cout << "Nhap ho ten nhan vien: ";
+	cin.ignore();
+	cin.getline(a.ten, 50);
+	cout << "Nhap ma nhan vien: ";
+	cin >> a.msnv;
+	cout << "Nhap ma cua hang nhan vien dang lam viec cho: ";
+	cin >> a.msch;
+	cout << "Nhap so gio lam viec cua nhan vien trong thang: ";
+	cin >> a.h;
+	a.luong = 0;
+}
+void nhaplist(NVlist &l, int n)
+{
+	NV a[100];
+	nv *p;
+	for (int i = 1; i <= n; i++)
+	{
+		cout << "Nhap mat hang thu " << i << " :" << endl;
+		nhapnv(a[i]);
+		p = GetNode(a[i]);
+		AddTailNV(l, p);
+		cout << endl;
+	}
+}
+void innv(NV a)
+{
+	cout << endl;
+	cout << "Ho ten nhan vien la: " << a.ten << endl;
+	cout << "Ma so nhan vien la: " << a.msnv << endl;
+	cout << "Ma so cua hang nhan vien dang lam: " << a.msch << endl;
+	cout << "So gio nhan vien lam trong thang la: " << a.h << endl;
+	cout << "So luong cua nhan vien trong thang la: " << a.luong << endl;
+	cout << endl;
+}
+void inNVlist(NVlist l)
+{
+	nv *p = l.head;
+	while (p != NULL)
+	{
+		innv(p->Info);
+		p = p->next;
+	}
+	delete p;
+}
+void timnvlamnhieunhat(NVlist L)
+{
+	nv *p = L.head;
+	int Max = 0;
+	while (p != NULL)
+	{
+		if (p->Info.h >= Max )
+			Max = p->Info.h;
+		p = p->next;
+	}
+	p = L.head;
+	cout << "Nhan vien lam nhieu gio nhat trong thang: " << endl;
+	while (p != NULL)
+	{
+		if (p->Info.h == Max) innv(p->Info);
+		p = p->next;
+	}
+	delete p;
+}
+void tinhtienluong(NVlist &L)
+{
+	nv *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == 1)       //Mã nhân viên là 1 là người quản lí cửa hàng có lương 22k/1h
+			p->Info.luong = p->Info.h * 22;
+		else p->Info.luong = 17 * p->Info.h;  //Nhân viên thường có lương 17k/1h
+		p = p->next;
+	}
+	delete p;
+}
+void tinhluongtheoma(NVlist &L, int manv)
+{
+	tinhtienluong(L);
+	/*cout << "Nhap ma nhan vien ban muon biet luong: ";
+	cin >> manv;*/
+	nv *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == manv)
+		{
+			cin.ignore();
+			innv(p->Info);
+			return;
+		}
+		p = p->next;
+	}
+	delete p;
+}
+void chuyennhanvien(NVlist &L, int mach, int manv)
+{
+	/*cout << "Nhap ma nhan vien muon chuyen di: ";
+	cin >> manv;
+	cout << "Nhap ma cua hang muon chuyen nhan vien qua: ";
+	cin >> mach;*/
+	nv *p = L.head;
+	while (p != NULL)
+	{
+
+		if (p->Info.msnv == manv)
+		{
+			p->Info.msch = mach;
+			innv(p->Info);
+			return;
+		}
+		p = p->next;
+	}
+	delete p;
+}
+void xoanhanviendau(NVlist &l)
+{
+	if (l.head == NULL) cout << "Danh sach rong";
+	else
+	{
+		nv *p = l.head;
+		if (l.head == l.tail) l.head = l.tail = NULL;
+		else l.head = l.head->next;
+		delete p;
+	}
+}
+void xoanhanviencuoi(NVlist &l)
+{
+	if (l.head == NULL) cout << "Danh sach rong";
+	else
+	{
+		nv *p = l.tail;
+		if (l.head == l.tail) l.head = l.tail = NULL;
+		else
+		{
+			nv *q;
+			for (q = l.head; q->next != l.tail; q = q->next)
+			{
+				q->next = NULL;
+				l.tail = q;
+			}
+			delete p;
+		}
+	}
+}
+void XoaNV(NVlist &l, nv *q)
+{
+	nv *p = q->next;
+	if (p == NULL) cout << "Khong xoa duoc!";
+	else
+	{
+		q->next = p->next;
+		if (p == l.tail) l.tail = q;
+		delete p;
+	}
+}
+void xoanhanvienthoiviec(NVlist &L, int manv)
+{
+	nv *p = L.head;
+	nv *q = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == manv)
+		{
+			if (p == L.head) xoanhanviendau(L);
+			else if (p == L.tail) xoanhanviencuoi(L);
+			else
+			{
+				XoaNV(L, q);
+				inNVlist(L);
+			}
+			return;
+		}
+		q = p;
+		p = p->next;
+	}
+}
+void tinhgiolam(NVlist &L, int manv, int h)
+{
+	/*cout << "Nhap ma nhan vien ban muon them gio lam: ";
+	cin >> manv;
+	cout << "So gio lam viec muon them vao: ";
+	cin >> h;*/
+	nv *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == manv)
+		{
+			p->Info.h += h;
+			cout << "So gio lam viec cua nhan vien sau khi them vo la: " << endl;
+			innv(p->Info);
+			return;
+		}
+		p = p->next;
+	}
+	delete p;
+}
