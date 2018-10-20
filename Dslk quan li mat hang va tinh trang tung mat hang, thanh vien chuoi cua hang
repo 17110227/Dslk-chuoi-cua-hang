@@ -32,10 +32,33 @@ typedef struct bill
 	int mamh; //Mã mặt hàng đã mua
 	int soluong; //Số lượng mua của mặt hàng đó
 };
+typedef struct date //Cấu trúc lưu ngày tháng năm
+{
+	int d, m, y;
+};
+typedef struct Khachhang
+{
+	int makh;
+	char ten[50];
+	int diemtichluy;
+	date ngaysinh;
+}KH;
+typedef struct khachhang
+{
+	KH Info;
+	khachhang *next;
+}kh;
+typedef struct KHlist   //Danh sách thành viên chuỗi cửa hàng
+{
+	kh *head;
+	kh *tail;
+};
 //Hàm tạo danh sách
 void CreateList(MHlist &l);
+void CreateKHList(KHlist &l);
 //Hàm tạo 1 phần tử của danh sách
 monhang *GetNode(MH a);
+khachhang *GetNodeKH(KH a);
 //Hàm phụ
 void xoadau(MHlist &l);  
 void xoacuoi(MHlist &l); 
@@ -43,11 +66,15 @@ void AddTail(MHlist &L, monhang *p);
 void AddHead(MHlist &L, monhang *p);
 void nhapbill(bill a[], int n);
 void dieuchinhsoluong(bill a, MHlist &L);
-//Hàm nhập, in thông tin của mỗi mặt hàng
 void nhapmathang(MH &a);
 void inmathang(MH a);
-//Hàm nhập danh sách
 void nhaplist(MHlist &l, int n);  
+void nhapkhachhang(KH &a);
+void AddTailKH(KHlist &L, kh *p);
+void nhapKHlist(KHlist &l, int n);
+void inkhachhang(KH a);
+void xuatKHlist(KHlist l);
+int kiemtrangaysinh(KHlist L, int makh, date t);
 //Hàm đưa ra các lựa chọn việc cần làm trong danh sách
 void Choices(MHlist &L, MH a[], int &n);
 //Các lựa chọn công việc
@@ -56,22 +83,32 @@ void xoatheomamh(MHlist &L, int x);  //Xóa mặt hàng theo mã
 int timtheoma(MHlist &L, int n);  //Tìm kiếm mặt hàng theo mã
 void sapxeptheogiatien(MHlist &L); // Sắp xếp mặt hàng theo giá từ thấp đến cao
 void timslnhohon5(MHlist &L); //In ra các mặt hàng có số lượng <5 để nhập thêm
-void Inbill(bill a[], int n1, MHlist l1, int n); // In hóa đơn tính tiền cho khách 
+void Inbill(bill a[], int n1, MHlist l1, int n, KHlist &L); // In hóa đơn tính tiền cho khách 
 //n1 là số mặt hàng khách hàng mua, n là số mặt hàng trong l1 
+int demthanhvien(KHlist L); //Thống kê số member của chuỗi cửa hàng
+void themthanhvien(KHlist &L);  //Thêm thành viên mới vào danh sách
+void tichluydiem(KHlist &L, int diem, int makh); //Tích lũy điểm cho thành viên
+int giamgia(KHlist L, int makh);
 void main()
 {
 	MH a[100];
-	int n, n1;
-	bill b[100];
+	KH b[100];
+	int na, nb, n1;
+	bill c[100];
 	cout << "Nhap so mat hang can quan li: ";
-	cin >> n;
-	MHlist L;
-	CreateList(L);
-	nhaplist(L, n);
+	cin >> na;
+	MHlist L1;
+	CreateList(L1);
+	nhaplist(L1, na);
+	KHlist L2;
+	CreateKHList(L2);
+	cout << "Nhap so thanh vien can quan li: ";
+	cin >> nb;
+	nhapKHlist(L2, nb);
 	cout << "Nhap so mat hang ban can mua: ";
 	cin >> n1;
-	nhapbill(b, n1);
-	Inbill(b, n1, L, n);
+	nhapbill(c, n1);
+	Inbill(c, n1, L1, na, L2);
 	//Choices(L, a, n);
 }
 void nhapmathang(MH &a)
@@ -384,9 +421,137 @@ void dieuchinhsoluong(bill a, MHlist &L)
 		p = p->next;
 	}
 }
-void Inbill(bill a[], int n1, MHlist l1, int n) //n1 là số mặt hàng khách hàng mua, n là số mặt hàng trong l1
+khachhang *GetNodeKH(KH a)
 {
-	int S = 0;
+	kh *p = new kh;
+	if (p == NULL)
+	{
+		return NULL;
+	}
+	p->Info = a;
+	p->next = NULL;
+	return p;
+}
+void CreateKHList(KHlist &l)
+{
+	l.head = l.tail = NULL;
+}
+void nhapkhachhang(KH &a)
+{
+	cout << "Nhap ho ten khach hang: ";
+	cin.ignore();
+	cin.getline(a.ten, 50);
+	cout << "Nhap ma khach hang: ";
+	cin >> a.makh;
+	cout << "Nhap diem tich luy cua khach hang: ";
+	cin >> a.diemtichluy;
+	cout << "Nhap ngay thang nam sinh cua khach hang: ";
+	cin >> a.ngaysinh.d >> a.ngaysinh.m >> a.ngaysinh.y;
+}
+void AddTailKH(KHlist &L, kh *p)
+{
+	if (L.head == NULL)
+	{
+		L.head = L.tail = p;
+	}
+	else
+	{
+		L.tail->next = p;
+		L.tail = p;
+	}
+}
+void nhapKHlist(KHlist &l, int n)
+{
+	KH a[100];
+	kh *p;
+	for (int i = 1; i <= n; i++)
+	{
+		cout << "Nhap khach hang thu " << i << " :" << endl;
+		nhapkhachhang(a[i]);
+		p = GetNodeKH(a[i]);
+		AddTailKH(l, p);
+		cout << endl;
+	}
+}
+void inkhachhang(KH a)
+{
+	cout << endl;
+	cout << "Ho ten khach hang: " << a.ten << endl;
+	cout << "Ma so khach hang la: " << a.makh << endl;
+	cout << "Diem tich luy cua khach hang la: " << a.diemtichluy << endl;
+	cout << endl;
+}
+void xuatKHlist(KHlist l)
+{
+	kh *p;
+	p = l.head;
+	while (p != NULL)
+	{
+		inkhachhang(p->Info);
+		p = p->next;
+	}
+	delete p;
+}
+int demthanhvien(KHlist L)
+{
+	kh *p = L.head;
+	int dem = 0;
+	while (p != NULL)
+	{
+		dem++;
+		p = p->next;
+	}
+	return dem;
+}
+void themthanhvien(KHlist &L)
+{
+	KH a;
+	int t = demthanhvien(L);
+	cout << "Nhap thong tin khach hang ban muon them: ";
+	nhapkhachhang(a);
+	a.makh = t + 1;
+	kh *p = GetNodeKH(a);
+	AddTailKH(L, p);
+}
+void tichluydiem(KHlist &L, int diem, int makh)
+{
+	kh *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.makh == makh)
+		{
+			p->Info.diemtichluy += diem;
+			return;
+		}
+		p = p->next;
+	}
+}
+int giamgia(KHlist L, int makh)
+{
+	kh *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.makh == makh && p->Info.diemtichluy >= 100) return 1;
+		else if (p->Info.makh == makh && p->Info.diemtichluy < 100) return 0;
+		p = p->next;
+	}
+}
+int kiemtrangaysinh(KHlist L, int makh, date t)
+{
+	kh *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.makh == makh && p->Info.ngaysinh.d ==  t.d && p->Info.ngaysinh.m == t.m) return 1;
+		else if (p->Info.makh == makh && (p->Info.ngaysinh.d != t.d || p->Info.ngaysinh.m != t.m)) return 0;
+		p = p->next;
+	}
+}
+void Inbill(bill a[], int n1, MHlist l1, int n, KHlist &L) //n1 là số mặt hàng khách hàng mua, n là số mặt hàng trong l1
+{
+	float S = 0;
+	date b;
+	cout << "Nhap ngay xuat bill: ";
+	cin >> b.d >> b.m >> b.y;
 	for (int i = 1; i <= n1; i++)
 	{
 		dieuchinhsoluong(a[i], l1);
@@ -401,5 +566,35 @@ void Inbill(bill a[], int n1, MHlist l1, int n) //n1 là số mặt hàng khách
 		}
 		else cout << "Khong tim duoc san pham co ma: " << a[i].mamh << endl;
 	}
+	int n2, makh, mark = 0;
+	cout << "Khach hang da la thanh vien cua cua hang chua. Nhap 1 neu co nhap 0 neu chua: ";
+	cin >> n2;
+	if (n2 == 1)
+	{
+		cout << "Nhap ma khach hang vao: ";
+		cin >> makh;
+		if (S >= 100 && giamgia(L, makh) == 1)
+		{
+			cout << "Khach hang da duoc giam gia 10%" << endl;
+			S = S * 0.9;
+			int diem = (S / 3) - 100; //giảm giá khi điểm tích lũy > 100 thì trừ điểm tích lũy 100
+			tichluydiem(L, diem, makh);
+			mark = 1; //đánh dấu nếu như đã giảm giá theo điểm tích lũy rồi thì không giảm theo ngày sinh nữa
+		}
+		else if (S >= 100 && kiemtrangaysinh(L, makh, b) == 1 && mark == 0)
+		{
+			cout << "Khach hang da duoc giam gia 10%" << endl;
+			S = S * 0.9;
+			int diem = S / 3;
+			tichluydiem(L, diem, makh);
+		}
+	}
+	else
+	{
+		cout << "Khach hang co muon tro thanh thanh vien cua cua hang khong. Nhap 1 neu co nhap 0 neu khong: ";
+		cin >> n2;
+		if (n2 == 1) themthanhvien(L);
+	}
 	cout << "Tong cong hoa don: " << S << endl;
+	cout << "Ngay xuat hoa don: " << b.d << "/" << b.m << "/" << b.y << endl;
 }
