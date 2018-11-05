@@ -1,3 +1,4 @@
+
 #include "pch.h"
 #include <iostream>
 using namespace std;
@@ -14,7 +15,7 @@ typedef struct mathang                //Lưu tên các mặt hàng có trong chu
 {
 	char ten[100];
 	int giatien;
-	int mamh;    
+	int mamh;
 	TT b;
 }MH;
 typedef struct monhang
@@ -24,6 +25,7 @@ typedef struct monhang
 };
 typedef struct MHlist
 {
+	int n;
 	monhang *head;
 	monhang *tail;
 };
@@ -36,6 +38,7 @@ typedef struct date //Cấu trúc lưu ngày tháng năm
 {
 	int d, m, y;
 };
+//Danh sách quản lý khách hàng
 typedef struct Khachhang
 {
 	int makh;
@@ -50,80 +53,113 @@ typedef struct khachhang
 }kh;
 typedef struct KHlist   //Danh sách thành viên chuỗi cửa hàng
 {
+	int n;
 	kh *head;
 	kh *tail;
 };
+//DSQL nhân viên
+typedef struct nhanvien
+{
+	char ten[50]; //Họ tên nhân viên
+	int msnv;     //Mã nhân viên
+	int msch;     //Mã cửa hàng nhân viên đó làm
+	int h;    //Số giờ nhân viên làm việc trong 1 tháng
+	int luong; //Tiền lương của nhân viên trong tháng đó
+}NV;
+typedef struct nv
+{
+	NV Info;
+	nv *next;
+};
+typedef struct NVlist
+{
+	int n;
+	nv *head;
+	nv *tail;
+};
+//Danh sách chuỗi cửa hàng (lồng các danh sách mặt hàng, nhân viên)
+typedef struct CuaHang
+{
+	MHlist mhl;                     //Danh sách quản lí mặt hàng
+	NVlist nvl;                     //Danh sách quản lí nhân viên
+	int mach;                       //Mã số cửa hàng trong chuỗi cửa hàng
+	int income;                     //Số tiền thu được của mỗi cửa hàng
+}CH;
+typedef struct CHnode
+{
+	CH Info;
+	CHnode *next;
+}ch;
+typedef struct CHlist
+{
+	int n;
+	ch *head;
+	ch *tail;
+};
 //Hàm tạo danh sách
-void CreateList(MHlist &l);
+void CreateMHList(MHlist &l);
 void CreateKHList(KHlist &l);
+void CreateNVList(NVlist &l);
 //Hàm tạo 1 phần tử của danh sách
 monhang *GetNode(MH a);
 khachhang *GetNodeKH(KH a);
+nv *GetNodeNV(NV a);
 //Hàm phụ
-void xoadau(MHlist &l);  
-void xoacuoi(MHlist &l); 
+void xoadau(MHlist &l);
+void xoacuoi(MHlist &l);
 void AddTail(MHlist &L, monhang *p);
 void AddHead(MHlist &L, monhang *p);
 void nhapbill(bill a[], int n);
 void dieuchinhsoluong(bill a, MHlist &L);
-void nhapmathang(MH &a);
 void inmathang(MH a);
-void nhaplist(MHlist &l, int n);  
+void nhapmathang(MH &a);
+void nhapMHlist(MHlist &l);
 void nhapkhachhang(KH &a);
 void AddTailKH(KHlist &L, kh *p);
-void nhapKHlist(KHlist &l, int n);
+void nhapKHlist(KHlist &l, const char *dskhachhang);
 void inkhachhang(KH a);
 void xuatKHlist(KHlist l);
 int kiemtrangaysinh(KHlist L, int makh, date t);
+void AddTailNV(NVlist &L, nv *p);
+void tinhtienluong(NVlist &L);
+void xoanhanviendau(NVlist &l);
+void xoanhanviencuoi(NVlist &l);
+void XoaNV(NVlist &l, nv *q);
+void nhapnv(NV &a);
+void nhapNVlist(NVlist &L);
 //Hàm đưa ra các lựa chọn việc cần làm trong danh sách
 void Choices(MHlist &L, MH a[], int &n);
 //Các lựa chọn công việc
-void xuatlist(MHlist l); //Xuất danh sách
+void xuatMHlist(MHlist l); //Xuất danh sách
 void xoatheomamh(MHlist &L, int x);  //Xóa mặt hàng theo mã
 int timtheoma(MHlist &L, int n);  //Tìm kiếm mặt hàng theo mã
 void sapxeptheogiatien(MHlist &L); // Sắp xếp mặt hàng theo giá từ thấp đến cao
 void timslnhohon5(MHlist &L); //In ra các mặt hàng có số lượng <5 để nhập thêm
-void Inbill(bill a[], int n1, MHlist l1, int n, KHlist &L); // In hóa đơn tính tiền cho khách 
+void Inbill(bill a[], int n1, MHlist l1, KHlist &L); // In hóa đơn tính tiền cho khách 
 //n1 là số mặt hàng khách hàng mua, n là số mặt hàng trong l1 
-int demthanhvien(KHlist L); //Thống kê số member của chuỗi cửa hàng
 void themthanhvien(KHlist &L);  //Thêm thành viên mới vào danh sách
 void tichluydiem(KHlist &L, int diem, int makh); //Tích lũy điểm cho thành viên
 int giamgia(KHlist L, int makh);
+void themmathang(MHlist &L);
+void inNVlist(NVlist l); //Xuất ra danh sách nhân viên
+void timnvlamnhieunhat(NVlist L); //Tìm nhân viên có số giờ làm việc nhiều nhất trong tháng để thưởng
+void tinhluongtheoma(NVlist &L, int manv);//Tính lương cho nhân viên nào đó
+void chuyennhanvien(NVlist &L, int mach, int manv);// Chuyển nhân viên sang chi nhánh khác
+void xoanhanvienthoiviec(NVlist &L, int manv);  //Xóa nhân viên thôi việc
+void tinhgiolam(NVlist &L, int manv, int h);       //Tính giờ làm cho nhân viên
+ch *GetNodeCH(CH a);
+void CreateCHList(CHlist &l);
+void AddTailCH(CHlist &L, ch *p);
+void nhapCHlist(CHlist &L);
+void InCHlist(CHlist L);
+void tinhtienthuduoc(CHlist L);
 void main()
 {
-	MH a[100];
-	KH b[100];
-	int na, nb, n1;
-	bill c[100];
-	cout << "Nhap so mat hang can quan li: ";
-	cin >> na;
-	MHlist L1;
-	CreateList(L1);
-	nhaplist(L1, na);
-	KHlist L2;
-	CreateKHList(L2);
-	cout << "Nhap so thanh vien can quan li: ";
-	cin >> nb;
-	nhapKHlist(L2, nb);
-	cout << "Nhap so mat hang ban can mua: ";
-	cin >> n1;
-	nhapbill(c, n1);
-	Inbill(c, n1, L1, na, L2);
-	//Choices(L, a, n);
-}
-void nhapmathang(MH &a)
-{
-	cout << "Nhap ten mat hang: ";
-	cin.ignore();
-	cin.getline(a.ten, 9);
-	cout << "Nhap gia tien: ";
-	cin >> a.giatien;
-	cout << "Nhap ma mat hang: ";
-	cin >> a.mamh;
-	cout << "Nhap so luong ban dau: ";
-	cin >> a.b.slbandau;
-	cout << "Nhap so luong hien con: ";
-	cin >> a.b.sl;	
+	CHlist L;
+	CreateCHList(L);
+	nhapCHlist(L);
+	InCHlist(L);
+	tinhtienthuduoc(L);
 }
 void inmathang(MH a)
 {
@@ -135,7 +171,7 @@ void inmathang(MH a)
 	cout << "So luong hien con la: " << a.b.sl << endl;
 	cout << endl;
 }
-void CreateList(MHlist &l)
+void CreateMHList(MHlist &l)
 {
 	l.head = l.tail = NULL;
 }
@@ -174,15 +210,30 @@ monhang *GetNode(MH a)
 	p->next = NULL;
 	return p;
 }
-void nhaplist(MHlist &l, int n)
+void nhapmathang(MH &a)
 {
-	MH a[100];
-	monhang *p;
-	for (int i = 1; i <= n; i++)
+	cout << "Nhap ten mat hang: ";
+	cin.ignore();
+	cin.getline(a.ten, 9);
+	cout << "Nhap gia tien: ";
+	cin >> a.giatien;
+	cout << "Nhap ma mat hang: ";
+	cin >> a.mamh;
+	cout << "Nhap so luong ban dau: ";
+	cin >> a.b.slbandau;
+	cout << "Nhap so luong hien con: ";
+	cin >> a.b.sl;
+}
+void nhapMHlist(MHlist &l)
+{
+	MH a;
+	cout << "Nhap so mat hang o cua hang: ";
+	cin >> l.n;
+	for (int i = 1; i <= l.n; i++)
 	{
-		cout << "Nhap mat hang thu " << i << " :" << endl;
-		nhapmathang(a[i]);
-		p = GetNode(a[i]);
+		cout << "Nhap mat hang thu " << i << ":" << endl;
+		nhapmathang(a);
+		monhang *p = GetNode(a);
 		AddTail(l, p);
 		cout << endl;
 	}
@@ -239,7 +290,7 @@ void nhaplist(MHlist &l, int n)
 
 	} while (_getch() != 27);
 }*/
-void xuatlist(MHlist l)
+void xuatMHlist(MHlist l)
 {
 	monhang *p;
 	p = l.head;
@@ -260,7 +311,7 @@ void xoadau(MHlist &l)
 		else l.head = l.head->next;
 		delete p;
 	}
-	xuatlist(l);
+	xuatMHlist(l);
 }
 void xoacuoi(MHlist &l)
 {
@@ -279,7 +330,7 @@ void xoacuoi(MHlist &l)
 			}
 			delete p;
 		}
-		xuatlist(l);
+		xuatMHlist(l);
 	}
 }
 void XoaNode(MHlist &l, monhang *q)
@@ -303,16 +354,17 @@ void xoatheomamh(MHlist &L, int x)
 		{
 			if (p == L.head) xoadau(L);
 			else if (p == L.tail) xoacuoi(L);
-			else 
+			else
 			{
 				XoaNode(L, q);
-				xuatlist(L);
 			}
-			break;
+			xuatMHlist(L);
+			return;
 		}
 		q = p;
 		p = p->next;
 	}
+	cout << "Ma da nhap khong co!" << endl;
 }
 int timtheoma(MHlist &L, int n)
 {
@@ -334,12 +386,12 @@ void sapxeptheogiatien(MHlist &l)
 	MHlist l1, l2;
 	monhang *tag, *p;
 	if (l.head == l.tail) return;
-	CreateList(l1);
-	CreateList(l2);
+	CreateMHList(l1);
+	CreateMHList(l2);
 	tag = l.head;
-	l.head = l.head->next; 
+	l.head = l.head->next;
 	tag->next = NULL;
-	while (l.head != NULL) 
+	while (l.head != NULL)
 	{
 		p = l.head;
 		l.head = l.head->next;
@@ -347,23 +399,25 @@ void sapxeptheogiatien(MHlist &l)
 		if (p->Info.giatien <= tag->Info.giatien) AddHead(l1, p);
 		else AddHead(l2, p);
 	}
-	sapxeptheogiatien(l1); 
+	sapxeptheogiatien(l1);
 	sapxeptheogiatien(l2);
-	if (l1.head != NULL) 
-	{ 
+	if (l1.head != NULL)
+	{
 		l.head = l1.head;
 		l1.tail->next = tag;
-	} 
+	}
 	else l.head = tag;
 	tag->next = l2.head;
 	if (l2.head != NULL) l.tail = l2.tail;
 	else l.tail = tag;
 }
-void them(MHlist &L, MH a)
+void themmathang(MHlist &L)
 {
+	MH a;
 	nhapmathang(a);
 	monhang *p = GetNode(a);
 	AddTail(L, p);
+	L.n++;
 }
 void timslnhohon5(MHlist &L)
 {
@@ -421,7 +475,7 @@ void dieuchinhsoluong(bill a, MHlist &L)
 		p = p->next;
 	}
 }
-khachhang *GetNodeKH(KH a)
+kh *GetNodeKH(KH a)
 {
 	kh *p = new kh;
 	if (p == NULL)
@@ -456,22 +510,28 @@ void AddTailKH(KHlist &L, kh *p)
 	}
 	else
 	{
-		L.tail->next = p;
+		L.tail->next = p->next;
 		L.tail = p;
 	}
 }
-void nhapKHlist(KHlist &l, int n)
+void nhapKHlist(KHlist &l, const char *dskhachhang)
 {
+	FILE *f1;
 	KH a[100];
-	kh *p;
-	for (int i = 1; i <= n; i++)
+	fopen_s(&f1, dskhachhang, "rt");
+	fscanf_s(f1, "%d\n", &l.n);
+	if (f1 != NULL)
 	{
-		cout << "Nhap khach hang thu " << i << " :" << endl;
-		nhapkhachhang(a[i]);
-		p = GetNodeKH(a[i]);
-		AddTailKH(l, p);
-		cout << endl;
+		for (int i = 1; i <= l.n; i++)
+		{
+			fgets(a[i].ten, 50, f1);
+			fscanf_s(f1, " %d %d %d %d %d\n", &a[i].makh, &a[i].diemtichluy, &a[i].ngaysinh.d, &a[i].ngaysinh.m, &a[i].ngaysinh.y);
+			kh *p = GetNodeKH(a[i]);
+			AddTailKH(l, p);
+		}
+		fclose(f1);
 	}
+	else printf("Tap tin nay khong mo duoc\n");
 }
 void inkhachhang(KH a)
 {
@@ -492,26 +552,15 @@ void xuatKHlist(KHlist l)
 	}
 	delete p;
 }
-int demthanhvien(KHlist L)
-{
-	kh *p = L.head;
-	int dem = 0;
-	while (p != NULL)
-	{
-		dem++;
-		p = p->next;
-	}
-	return dem;
-}
 void themthanhvien(KHlist &L)
 {
 	KH a;
-	int t = demthanhvien(L);
 	cout << "Nhap thong tin khach hang ban muon them: ";
 	nhapkhachhang(a);
-	a.makh = t + 1;
+	a.makh = L.n + 1;
 	kh *p = GetNodeKH(a);
 	AddTailKH(L, p);
+	L.n++;
 }
 void tichluydiem(KHlist &L, int diem, int makh)
 {
@@ -541,12 +590,12 @@ int kiemtrangaysinh(KHlist L, int makh, date t)
 	kh *p = L.head;
 	while (p != NULL)
 	{
-		if (p->Info.makh == makh && p->Info.ngaysinh.d ==  t.d && p->Info.ngaysinh.m == t.m) return 1;
+		if (p->Info.makh == makh && p->Info.ngaysinh.d == t.d && p->Info.ngaysinh.m == t.m) return 1;
 		else if (p->Info.makh == makh && (p->Info.ngaysinh.d != t.d || p->Info.ngaysinh.m != t.m)) return 0;
 		p = p->next;
 	}
 }
-void Inbill(bill a[], int n1, MHlist l1, int n, KHlist &L) //n1 là số mặt hàng khách hàng mua, n là số mặt hàng trong l1
+void Inbill(bill a[], int n1, MHlist l1, KHlist &L) //n1 là số mặt hàng khách hàng mua, n là số mặt hàng trong l1
 {
 	float S = 0;
 	date b;
@@ -597,4 +646,312 @@ void Inbill(bill a[], int n1, MHlist l1, int n, KHlist &L) //n1 là số mặt h
 	}
 	cout << "Tong cong hoa don: " << S << endl;
 	cout << "Ngay xuat hoa don: " << b.d << "/" << b.m << "/" << b.y << endl;
+}
+void CreateNVList(NVlist &l)
+{
+	l.head = l.tail = NULL;
+}
+nv *GetNodeNV(NV a)
+{
+	nv *p = new nv;
+	if (p == NULL)
+	{
+		return NULL;
+	}
+	p->Info = a;
+	p->next = NULL;
+	return p;
+}
+void AddTailNV(NVlist &L, nv *p)
+{
+	if (L.head == NULL)
+	{
+		L.head = L.tail = p;
+	}
+	else
+	{
+		L.tail->next = p;
+		L.tail = p;
+	}
+}
+void innv(NV a)
+{
+	cout << endl;
+	cout << "Ho ten nhan vien la: " << a.ten << endl;
+	cout << "Ma so nhan vien la: " << a.msnv << endl;
+	cout << "Ma so cua hang nhan vien dang lam: " << a.msch << endl;
+	cout << "So gio nhan vien lam trong thang la: " << a.h << endl;
+	cout << "So luong cua nhan vien trong thang la: " << a.luong << endl;
+	cout << endl;
+}
+void inNVlist(NVlist l)
+{
+	nv *p = l.head;
+	while (p != NULL)
+	{
+		innv(p->Info);
+		p = p->next;
+	}
+	delete p;
+}
+void timnvlamnhieunhat(NVlist L)
+{
+	nv *p = L.head;
+	int Max = 0;
+	while (p != NULL)
+	{
+		if (p->Info.h >= Max)
+			Max = p->Info.h;
+		p = p->next;
+	}
+	p = L.head;
+	cout << "Nhan vien lam nhieu gio nhat trong thang: " << endl;
+	while (p != NULL)
+	{
+		if (p->Info.h == Max) innv(p->Info);
+		p = p->next;
+	}
+	delete p;
+}
+void tinhtienluong(NVlist &L)
+{
+	nv *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == 1)       //Mã nhân viên là 1 là người quản lí cửa hàng có lương 22k/1h
+			p->Info.luong = p->Info.h * 22;
+		else p->Info.luong = 17 * p->Info.h;  //Nhân viên thường có lương 17k/1h
+		p = p->next;
+	}
+	delete p;
+}
+void tinhluongtheoma(NVlist &L, int manv)
+{
+	tinhtienluong(L);
+	/*cout << "Nhap ma nhan vien ban muon biet luong: ";
+	cin >> manv;*/
+	nv *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == manv)
+		{
+			cin.ignore();
+			innv(p->Info);
+			return;
+		}
+		p = p->next;
+	}
+	delete p;
+}
+void chuyennhanvien(NVlist &L, int mach, int manv)
+{
+	/*cout << "Nhap ma nhan vien muon chuyen di: ";
+	cin >> manv;
+	cout << "Nhap ma cua hang muon chuyen nhan vien qua: ";
+	cin >> mach;*/
+	L.n--;
+	nv *p = L.head;
+	while (p != NULL)
+	{
+
+		if (p->Info.msnv == manv)
+		{
+			p->Info.msch = mach;
+			innv(p->Info);
+			return;
+		}
+		p = p->next;
+	}
+	delete p;
+}
+void xoanhanviendau(NVlist &l)
+{
+	if (l.head == NULL) cout << "Danh sach rong";
+	else
+	{
+		nv *p = l.head;
+		if (l.head == l.tail) l.head = l.tail = NULL;
+		else l.head = l.head->next;
+		delete p;
+	}
+}
+void xoanhanviencuoi(NVlist &l)
+{
+	if (l.head == NULL) cout << "Danh sach rong";
+	else
+	{
+		nv *p = l.tail;
+		if (l.head == l.tail) l.head = l.tail = NULL;
+		else
+		{
+			nv *q;
+			for (q = l.head; q->next != l.tail; q = q->next)
+			{
+				q->next = NULL;
+				l.tail = q;
+			}
+			delete p;
+		}
+	}
+}
+void XoaNV(NVlist &l, nv *q)
+{
+	nv *p = q->next;
+	if (p == NULL) cout << "Khong xoa duoc!";
+	else
+	{
+		q->next = p->next;
+		if (p == l.tail) l.tail = q;
+		delete p;
+	}
+}
+void xoanhanvienthoiviec(NVlist &L, int manv)
+{
+	nv *p = L.head;
+	nv *q = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == manv)
+		{
+			if (p == L.head) xoanhanviendau(L);
+			else if (p == L.tail) xoanhanviencuoi(L);
+			else
+			{
+				XoaNV(L, q);
+				inNVlist(L);
+			}
+			return;
+		}
+		q = p;
+		p = p->next;
+	}
+	L.n--;
+}
+void tinhgiolam(NVlist &L, int manv, int h)
+{
+	/*cout << "Nhap ma nhan vien ban muon them gio lam: ";
+	cin >> manv;
+	cout << "So gio lam viec muon them vao: ";
+	cin >> h;*/
+	nv *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.msnv == manv)
+		{
+			p->Info.h += h;
+			cout << "So gio lam viec cua nhan vien sau khi them vo la: " << endl;
+			innv(p->Info);
+			return;
+		}
+		p = p->next;
+	}
+	delete p;
+}
+void nhapnv(NV &a)
+{
+	cout << "Nhap ten nhan vien: ";
+	cin.ignore();
+	cin.getline(a.ten, 50);
+	cout << "Nhap ma nhan vien: ";
+	cin >> a.msnv;
+	cout << "Nhap ma so cua hang cua nhan vien: ";
+	cin >> a.msch;
+	cout << "Nhap so gio lam viec cua nhan vien trong thang: ";
+	cin >> a.h;
+	cout << "Nhap luong cua nhan vien trong thang do: ";
+	cin >> a.luong;
+}
+void nhapNVlist(NVlist &L)
+{
+	NV a;
+	cout << "Nhap so nhan vien cua cua hang: ";
+	cin >> L.n;
+	for (int i = 1; i <= L.n; i++)
+	{
+		cout << "Nhap thong tin nhan vien thu " << i << ":" << endl;
+		nhapnv(a);
+		nv *p = GetNodeNV(a);
+		AddTailNV(L, p);
+		cout << endl;
+	}
+}
+void CreateCHList(CHlist &l)
+{
+	l.head = l.tail = NULL;
+}
+ch *GetNodeCH(CH a)
+{
+	ch *p = new ch;
+	if (p == NULL)
+	{
+		return NULL;
+	}
+	p->Info = a;
+	p->next = NULL;
+	return p;
+}
+void AddTailCH(CHlist &L, ch *p)
+{
+	if (L.head == NULL)
+	{
+		L.head = L.tail = p;
+	}
+	else
+	{
+		L.tail->next = p;
+		L.tail = p;
+	}
+}
+void nhapCHlist(CHlist &L)
+{
+	cout << "Nhap so cua hang trong chuoi cua hang: ";
+	cin >> L.n;
+	CH a;
+	for (int i = 1; i <= L.n; i++)
+	{
+		cout << "Nhap thong tin cua hang thu " << i << ":" << endl;
+		cout << "Nhap ma cua hang: ";
+		cin >> a.mach;
+		CreateMHList(a.mhl);
+		CreateNVList(a.nvl);
+		cout << endl;
+		nhapMHlist(a.mhl);
+		cout << endl;
+		nhapNVlist(a.nvl);
+		ch *p = GetNodeCH(a);
+		AddTailCH(L, p);
+		cout << endl;
+	}	
+}
+void InCHlist(CHlist L)
+{
+	ch *p = L.head;
+	int i = 0;
+	while (p != NULL)
+	{ 
+		i++;
+		cout << "Thong tin cua hang thu " << i << endl;
+		xuatMHlist(p->Info.mhl);
+		cout << endl;
+		inNVlist(p->Info.nvl);
+		cout << endl;
+		p = p->next;
+	}
+}
+void tinhtienthuduoc(CHlist L)
+{
+	ch *p = L.head;
+	while (p != NULL)
+	{
+		int s = 0;
+		monhang *q = p->Info.mhl.head;
+		while (q != NULL)
+		{
+			s += (q->Info.b.slbandau - q->Info.b.sl)*q->Info.giatien;
+			q = q->next;
+		}
+		p->Info.income = s;
+		cout << "So tien cua hang thu: " << p->Info.mach << " thu duoc trong thang la: " << p->Info.income << endl;
+		p = p->next;
+	}
 }
