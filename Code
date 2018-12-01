@@ -1,10 +1,15 @@
 
+// Test.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
+
 #include "pch.h"
 #include <iostream>
 using namespace std;
-#include "stdio.h";
-#include <conio.h>;
-#include <string.h>;
+#include "stdio.h"
+#include <conio.h>
+#include <string.h>
+#include <Windows.h>
+#include <fstream>
 //DSQL mặt hàng
 typedef struct tinhtrang
 {
@@ -13,19 +18,19 @@ typedef struct tinhtrang
 }TT;
 typedef struct mathang                //Lưu tên các mặt hàng có trong chuỗi cửa hàng và giá tiền
 {
-	char ten[100];
-	int giatien;
-	int mamh;
-	TT b;
+	char ten[100];                  //tên mặt hàng
+	int giatien;				   //giá tiền của món hàng đó
+	int mamh;                     //mã mặt hàng
+	TT b;                        //tình trạng của món hàng
 }MH;
-typedef struct monhang
+typedef struct monhang          //1 Node trong danh sách liên kết quản lý mặt hàng
 {
 	MH Info;
 	monhang *next;
 };
-typedef struct MHlist
+typedef struct MHlist          //danh sách liên kết quản lý mặt hàng
 {
-	int n;
+	int n;                     //Số mặt hàng (số Node) có trong danh sách đó
 	monhang *head;
 	monhang *tail;
 };
@@ -41,10 +46,10 @@ typedef struct date //Cấu trúc lưu ngày tháng năm
 //Danh sách quản lý khách hàng
 typedef struct Khachhang
 {
-	int makh;
-	char ten[50];
-	int diemtichluy;
-	date ngaysinh;
+	int makh;        //Mã khách hàng
+	char ten[50];    //Họ và tên khách hàng
+	int diemtichluy; //Điểm tích lũy của khách hàng
+	date ngaysinh;   //Ngày sinh của khách hàng
 }KH;
 typedef struct khachhang
 {
@@ -81,7 +86,6 @@ typedef struct NVlist
 typedef struct CuaHang
 {
 	MHlist mhl;                     //Danh sách quản lí mặt hàng
-	NVlist nvl;                     //Danh sách quản lí nhân viên
 	int mach;                       //Mã số cửa hàng trong chuỗi cửa hàng
 	int income;                     //Số tiền thu được của mỗi cửa hàng
 }CH;
@@ -92,7 +96,9 @@ typedef struct CHnode
 }ch;
 typedef struct CHlist
 {
-	int n;
+	int n;                          //Số cửa hàng trong chuỗi
+	NVlist nvl;                     //Danh sách quản lí nhân viên của chuỗi cửa hàng
+	KHlist tvl;                     //Danh sách quản lí thành viên của chuỗi cửa hàng
 	ch *head;
 	ch *tail;
 };
@@ -100,6 +106,7 @@ typedef struct CHlist
 void CreateMHList(MHlist &l);
 void CreateKHList(KHlist &l);
 void CreateNVList(NVlist &l);
+void CreateCHList(CHlist &l);
 //Hàm tạo 1 phần tử của danh sách
 monhang *GetNode(MH a);
 khachhang *GetNodeKH(KH a);
@@ -116,7 +123,6 @@ void nhapmathang(MH &a);
 void nhapMHlist(MHlist &l);
 void nhapkhachhang(KH &a);
 void AddTailKH(KHlist &L, kh *p);
-void nhapKHlist(KHlist &l, const char *dskhachhang);
 void inkhachhang(KH a);
 void xuatKHlist(KHlist l);
 int kiemtrangaysinh(KHlist L, int makh, date t);
@@ -126,13 +132,22 @@ void xoanhanviendau(NVlist &l);
 void xoanhanviencuoi(NVlist &l);
 void XoaNV(NVlist &l, nv *q);
 void nhapnv(NV &a);
-void nhapNVlist(NVlist &L);
+void AddTailCH(CHlist &L, ch *p);
+void nhapCHlist(CHlist &L);
+void InCHlist(CHlist L);
+void gotoXY(int colum);
+void TextColor(int color);
+int timtheoma(MHlist &L, int n);
+CHnode* timcuahangtheoma(CHlist L, int n);
+void nhapMHlist(const char *ds, MHlist &L);
+void nhapNVlist(const char *ds, NVlist &L);
+void nhapKHlist(const char *ds, KHlist &L);
 //Hàm đưa ra các lựa chọn việc cần làm trong danh sách
-void Choices(MHlist &L, MH a[], int &n);
+void Choices(CHlist &L);
 //Các lựa chọn công việc
 void xuatMHlist(MHlist l); //Xuất danh sách
 void xoatheomamh(MHlist &L, int x);  //Xóa mặt hàng theo mã
-int timtheoma(MHlist &L, int n);  //Tìm kiếm mặt hàng theo mã
+int timtheoten(MHlist &L, char n[]);  //Tìm kiếm mặt hàng theo tên
 void sapxeptheogiatien(MHlist &L); // Sắp xếp mặt hàng theo giá từ thấp đến cao
 void timslnhohon5(MHlist &L); //In ra các mặt hàng có số lượng <5 để nhập thêm
 void Inbill(bill a[], int n1, MHlist l1, KHlist &L); // In hóa đơn tính tiền cho khách 
@@ -142,33 +157,35 @@ void tichluydiem(KHlist &L, int diem, int makh); //Tích lũy điểm cho thành
 int giamgia(KHlist L, int makh);
 void themmathang(MHlist &L);
 void inNVlist(NVlist l); //Xuất ra danh sách nhân viên
-void timnvlamnhieunhat(NVlist L); //Tìm nhân viên có số giờ làm việc nhiều nhất trong tháng để thưởng
+void timnvlamnhieunhat(NVlist &L, int mach); //Tìm nhân viên có số giờ làm việc nhiều nhất trong tháng để thưởng
 void tinhluongtheoma(NVlist &L, int manv);//Tính lương cho nhân viên nào đó
 void chuyennhanvien(NVlist &L, int mach, int manv);// Chuyển nhân viên sang chi nhánh khác
 void xoanhanvienthoiviec(NVlist &L, int manv);  //Xóa nhân viên thôi việc
 void tinhgiolam(NVlist &L, int manv, int h);       //Tính giờ làm cho nhân viên
 ch *GetNodeCH(CH a);
-void CreateCHList(CHlist &l);
-void AddTailCH(CHlist &L, ch *p);
-void nhapCHlist(CHlist &L);
-void InCHlist(CHlist L);
 void tinhtienthuduoc(CHlist L);
+HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 void main()
 {
+	/*CHlist L;
+	KHlist L1;
+	CreateCHList(L);
+	CreateKHList(L1);
+	nhapCHlist(L);
+	Choices(L);*/
 	CHlist L;
 	CreateCHList(L);
 	nhapCHlist(L);
-	InCHlist(L);
-	tinhtienthuduoc(L);
+	//InCHlist(L);
+	Choices(L);
 }
 void inmathang(MH a)
 {
-	cout << endl;
-	cout << "Ten mat hang: " << a.ten << endl;
-	cout << "Ma so mat hang la: " << a.mamh << endl;
-	cout << "Gia tien la: " << a.giatien << endl;
-	cout << "So luong ban dau mat hang la: " << a.b.slbandau << endl;
-	cout << "So luong hien con la: " << a.b.sl << endl;
+	cout << "      Ten mat hang: " << a.ten << endl;
+	cout << "      Ma so mat hang la: " << a.mamh << endl;
+	cout << "      Gia tien la: " << a.giatien << endl;
+	cout << "      So luong ban dau mat hang la: " << a.b.slbandau << endl;
+	cout << "      So luong hien con la: " << a.b.sl << endl;
 	cout << endl;
 }
 void CreateMHList(MHlist &l)
@@ -212,84 +229,36 @@ monhang *GetNode(MH a)
 }
 void nhapmathang(MH &a)
 {
-	cout << "Nhap ten mat hang: ";
+	cout << "      Nhap ten mat hang: ";
 	cin.ignore();
 	cin.getline(a.ten, 9);
-	cout << "Nhap gia tien: ";
+	cout << "      Nhap gia tien: ";
 	cin >> a.giatien;
-	cout << "Nhap ma mat hang: ";
+	cout << "      Nhap ma mat hang: ";
 	cin >> a.mamh;
-	cout << "Nhap so luong ban dau: ";
+	cout << "      Nhap so luong ban dau: ";
 	cin >> a.b.slbandau;
-	cout << "Nhap so luong hien con: ";
+	cout << "      Nhap so luong hien con: ";
 	cin >> a.b.sl;
 }
 void nhapMHlist(MHlist &l)
 {
 	MH a;
-	cout << "Nhap so mat hang o cua hang: ";
+	TextColor(11);
+	cout << "    Nhap so MAT HANG o cua hang: ";
 	cin >> l.n;
+	TextColor(15);
 	for (int i = 1; i <= l.n; i++)
 	{
-		cout << "Nhap mat hang thu " << i << ":" << endl;
+		TextColor(12);
+		cout << "    Nhap mat hang thu " << i << ":" << endl;
+		TextColor(15);
 		nhapmathang(a);
 		monhang *p = GetNode(a);
 		AddTail(l, p);
 		cout << endl;
 	}
 }
-/*void Choices(MHlist &L, MH a[], int &n)
-{
-	cout << "Day la danh sach lien ket dung de quan li cac mat hang cua chuoi cua hang. Moi ban chon 1 trong cac cong viec ma ban muon thuc hien voi danh sach nay: " << endl;
-	cout << "1. In danh sach mat hang vua nhap." << endl;
-	cout << "2. Xoa mat hang theo ma mat hang." << endl;
-	cout << "3. Tim kiem mat hang theo ma mat hang" << endl;
-	cout << "4. Sap xep danh sach theo gia tien tu cao den thap" << endl;
-	int n1;
-	do {
-		cout << "Ban chon cong viec so may: ";
-		cin >> n1;
-		switch (n1)
-		{
-		case 1:
-		{
-			xuatlist(L);
-			cout << endl;
-			break;
-		}
-		case 2:
-		{
-			int x;
-			cout << "Nhap ma mat hang muon xoa: ";
-			cin >> x;
-			xoatheomamh(L, x, a, n);
-			cout << endl;
-			break;
-		}
-		case 3:
-		{
-			int x;
-			cout << "Nhap ma mat hang muon tim: ";
-			cin >> x;
-			timtheoma(L, x);
-			cout << endl;
-			break;
-		}
-		case 4:
-		{
-			sapxeptheogiatien(L);
-			xuatlist(L);
-			break;
-		}
-		default:
-			cout << "Gia tri khong hop le" << endl;
-			break;
-		}
-		cout << "*****Nhan ESC de thoat.*****\n";
-		cout << "-----nhan ENTER de tiep tuc chon lai.-----\n";
-
-	} while (_getch() != 27);
-}*/
 void xuatMHlist(MHlist l)
 {
 	monhang *p;
@@ -366,6 +335,21 @@ void xoatheomamh(MHlist &L, int x)
 	}
 	cout << "Ma da nhap khong co!" << endl;
 }
+int timtheoten(MHlist &L, char n[])
+{
+	monhang *p = L.head;
+	while (p != NULL)
+	{
+		if (strstr(p->Info.ten, n) != NULL)  //Tìm xem chuỗi n có nằm trong chuỗi lưu tên mặt hàng không
+		{
+			cin.ignore();
+			inmathang(p->Info);
+			return 1;                       //Nếu tìm được hàm sẽ trả về 1
+		}
+		p = p->next;
+	}
+	return 0;                              //Trả về 0 nếu không tìm được
+}
 int timtheoma(MHlist &L, int n)
 {
 	monhang *p = L.head;
@@ -431,7 +415,7 @@ void timslnhohon5(MHlist &L)
 			cout << "Ban muon nhap them bao nhieu: ";
 			int t;
 			cin >> t;
-			p->Info.b.sl = p->Info.b.slbandau = p->Info.b.sl + t;
+			p->Info.b.sl = p->Info.b.slbandau = p->Info.b.sl + t;  //Điều chỉnh số lượng sau khi nhập số lượng hiện thời bằng với ban đầu
 		}
 		p = p->next;
 	}
@@ -441,10 +425,10 @@ void nhapbill(bill a[], int n)
 {
 	for (int i = 1; i <= n; i++)
 	{
-		cout << "Nhap mat hang " << i << ": ";
-		cout << "Nhap ma mat hang: ";
+		cout << "      Nhap mat hang " << i << ": " << endl;
+		cout << "      Nhap ma mat hang: ";
 		cin >> a[i].mamh;
-		cout << "Nhap so luong can mua: ";
+		cout << "      Nhap so luong can mua: ";
 		cin >> a[i].soluong;
 		cout << endl;
 	}
@@ -492,14 +476,14 @@ void CreateKHList(KHlist &l)
 }
 void nhapkhachhang(KH &a)
 {
-	cout << "Nhap ho ten khach hang: ";
+	cout << "      Nhap ho ten khach hang: ";
 	cin.ignore();
 	cin.getline(a.ten, 50);
-	cout << "Nhap ma khach hang: ";
+	cout << "      Nhap ma khach hang: ";
 	cin >> a.makh;
-	cout << "Nhap diem tich luy cua khach hang: ";
+	cout << "      Nhap diem tich luy cua khach hang: ";
 	cin >> a.diemtichluy;
-	cout << "Nhap ngay thang nam sinh cua khach hang: ";
+	cout << "      Nhap ngay thang nam sinh cua khach hang: ";
 	cin >> a.ngaysinh.d >> a.ngaysinh.m >> a.ngaysinh.y;
 }
 void AddTailKH(KHlist &L, kh *p)
@@ -510,41 +494,21 @@ void AddTailKH(KHlist &L, kh *p)
 	}
 	else
 	{
-		L.tail->next = p->next;
+		L.tail->next = p;
 		L.tail = p;
 	}
-}
-void nhapKHlist(KHlist &l, const char *dskhachhang)
-{
-	FILE *f1;
-	KH a[100];
-	fopen_s(&f1, dskhachhang, "rt");
-	fscanf_s(f1, "%d\n", &l.n);
-	if (f1 != NULL)
-	{
-		for (int i = 1; i <= l.n; i++)
-		{
-			fgets(a[i].ten, 50, f1);
-			fscanf_s(f1, " %d %d %d %d %d\n", &a[i].makh, &a[i].diemtichluy, &a[i].ngaysinh.d, &a[i].ngaysinh.m, &a[i].ngaysinh.y);
-			kh *p = GetNodeKH(a[i]);
-			AddTailKH(l, p);
-		}
-		fclose(f1);
-	}
-	else printf("Tap tin nay khong mo duoc\n");
 }
 void inkhachhang(KH a)
 {
 	cout << endl;
-	cout << "Ho ten khach hang: " << a.ten << endl;
-	cout << "Ma so khach hang la: " << a.makh << endl;
-	cout << "Diem tich luy cua khach hang la: " << a.diemtichluy << endl;
+	cout << "    Ho ten khach hang: " << a.ten << endl;
+	cout << "    Ma so khach hang la: " << a.makh << endl;
+	cout << "    Diem tich luy cua khach hang la: " << a.diemtichluy << endl;
 	cout << endl;
 }
 void xuatKHlist(KHlist l)
 {
-	kh *p;
-	p = l.head;
+	kh *p = l.head;
 	while (p != NULL)
 	{
 		inkhachhang(p->Info);
@@ -555,9 +519,9 @@ void xuatKHlist(KHlist l)
 void themthanhvien(KHlist &L)
 {
 	KH a;
-	cout << "Nhap thong tin khach hang ban muon them: ";
-	nhapkhachhang(a);
-	a.makh = L.n + 1;
+	cout << "    Nhap thong tin khach hang ban muon them: " << endl;
+	nhapkhachhang(a);     //Hàm nhập thông tin của khách hàng
+	a.makh = L.n + 1;     //Mã khách hàng sẽ là tổng số thành viên trong KHlist + 1
 	kh *p = GetNodeKH(a);
 	AddTailKH(L, p);
 	L.n++;
@@ -599,32 +563,33 @@ void Inbill(bill a[], int n1, MHlist l1, KHlist &L) //n1 là số mặt hàng kh
 {
 	float S = 0;
 	date b;
-	cout << "Nhap ngay xuat bill: ";
+	cout << "      Nhap ngay xuat bill: ";
 	cin >> b.d >> b.m >> b.y;
 	for (int i = 1; i <= n1; i++)
 	{
-		dieuchinhsoluong(a[i], l1);
-		int t = timtheoma(l1, a[i].mamh);
-		if (t == 1)
+		dieuchinhsoluong(a[i], l1);           //Điều chỉnh số lượng của món hàng trong hệ thống 
+		int t = timtheoma(l1, a[i].mamh);     //Tìm món hàng theo mã xem món hàng đó có không
+		if (t == 1)                       //Có món hàng với mã đó
 		{
-			cout << "So luong: " << a[i].soluong << endl;
-			int t = giatien(l1, a[i].mamh);
-			cout << "Thanh tien la: " << t * a[i].soluong;
+			cout << "      So luong: " << a[i].soluong << endl;
+			int t = giatien(l1, a[i].mamh);    //Tìm giá tiền của món hàng đó theo mã món hàng
+			cout << "      Thanh tien la: " << t * a[i].soluong;
 			S += t * a[i].soluong;
 			cout << endl;
 		}
-		else cout << "Khong tim duoc san pham co ma: " << a[i].mamh << endl;
+		else cout << "      Khong tim duoc san pham co ma: " << a[i].mamh << endl;
 	}
 	int n2, makh, mark = 0;
-	cout << "Khach hang da la thanh vien cua cua hang chua. Nhap 1 neu co nhap 0 neu chua: ";
+	cout << "      Khach hang da la thanh vien cua cua hang chua. Nhap 1 neu co nhap 0 neu chua: ";
 	cin >> n2;
 	if (n2 == 1)
 	{
-		cout << "Nhap ma khach hang vao: ";
+		cout << "      Nhap ma khach hang vao: ";
 		cin >> makh;
-		if (S >= 100 && giamgia(L, makh) == 1)
+		if (S >= 100 && giamgia(L, makh) == 1)  //Xem hóa đơn của thành viên có trên 100 và đủ điều kiện để giảm giá không
 		{
-			cout << "Khach hang da duoc giam gia 10%" << endl;
+			TextColor(14);
+			cout << "      Khach hang da duoc giam gia 10%" << endl;
 			S = S * 0.9;
 			int diem = (S / 3) - 100; //giảm giá khi điểm tích lũy > 100 thì trừ điểm tích lũy 100
 			tichluydiem(L, diem, makh);
@@ -632,20 +597,21 @@ void Inbill(bill a[], int n1, MHlist l1, KHlist &L) //n1 là số mặt hàng kh
 		}
 		else if (S >= 100 && kiemtrangaysinh(L, makh, b) == 1 && mark == 0)
 		{
-			cout << "Khach hang da duoc giam gia 10%" << endl;
+			TextColor(14);
+			cout << "      Khach hang da duoc giam gia 10% !" << endl;
 			S = S * 0.9;
 			int diem = S / 3;
-			tichluydiem(L, diem, makh);
+			tichluydiem(L, diem, makh);  //Tích điểm cho khách hàng theo giá trị hóa đơn
 		}
 	}
-	else
+	else  //Xem khách hàng có muốn thành thành viên của chuỗi không
 	{
-		cout << "Khach hang co muon tro thanh thanh vien cua cua hang khong. Nhap 1 neu co nhap 0 neu khong: ";
+		cout << "      Khach hang co muon tro thanh thanh vien cua cua hang khong. Nhap 1 neu co nhap 0 neu khong: ";
 		cin >> n2;
 		if (n2 == 1) themthanhvien(L);
 	}
-	cout << "Tong cong hoa don: " << S << endl;
-	cout << "Ngay xuat hoa don: " << b.d << "/" << b.m << "/" << b.y << endl;
+	cout << "      Tong cong hoa don: " << S << endl;
+	cout << "      Ngay xuat hoa don: " << b.d << "/" << b.m << "/" << b.y << endl;
 }
 void CreateNVList(NVlist &l)
 {
@@ -677,11 +643,11 @@ void AddTailNV(NVlist &L, nv *p)
 void innv(NV a)
 {
 	cout << endl;
-	cout << "Ho ten nhan vien la: " << a.ten << endl;
-	cout << "Ma so nhan vien la: " << a.msnv << endl;
-	cout << "Ma so cua hang nhan vien dang lam: " << a.msch << endl;
-	cout << "So gio nhan vien lam trong thang la: " << a.h << endl;
-	cout << "So luong cua nhan vien trong thang la: " << a.luong << endl;
+	cout << "      Ho ten nhan vien la: " << a.ten << endl;
+	cout << "      Ma so nhan vien la: " << a.msnv << endl;
+	cout << "      Ma so cua hang nhan vien dang lam: " << a.msch << endl;
+	cout << "      So gio nhan vien lam trong thang la: " << a.h << endl;
+	cout << "      So luong cua nhan vien trong thang la: " << a.luong << endl;
 	cout << endl;
 }
 void inNVlist(NVlist l)
@@ -694,21 +660,24 @@ void inNVlist(NVlist l)
 	}
 	delete p;
 }
-void timnvlamnhieunhat(NVlist L)
+void timnvlamnhieunhat(NVlist &L, int mach)
 {
 	nv *p = L.head;
 	int Max = 0;
-	while (p != NULL)
+	while (p != NULL)    //Tìm max giờ làm việc 
 	{
-		if (p->Info.h >= Max)
-			Max = p->Info.h;
+		if (p->Info.h >= Max && p->Info.msch == mach) Max = p->Info.h;
 		p = p->next;
 	}
 	p = L.head;
-	cout << "Nhan vien lam nhieu gio nhat trong thang: " << endl;
-	while (p != NULL)
+	cout << "Nhan vien lam nhieu gio nhat trong thang: " << endl; 
+	while (p != NULL) //Tìm nhân viên có max giờ làm việc
 	{
-		if (p->Info.h == Max) innv(p->Info);
+		if (p->Info.h == Max && p->Info.msch == mach)
+		{
+			p->Info.luong += 100; //Thưởng thêm cho nhân viên đó
+			innv(p->Info);
+		}
 		p = p->next;
 	}
 	delete p;
@@ -727,16 +696,14 @@ void tinhtienluong(NVlist &L)
 }
 void tinhluongtheoma(NVlist &L, int manv)
 {
-	tinhtienluong(L);
-	/*cout << "Nhap ma nhan vien ban muon biet luong: ";
-	cin >> manv;*/
+	tinhtienluong(L); //Tính tiền lương của cả list
 	nv *p = L.head;
 	while (p != NULL)
 	{
 		if (p->Info.msnv == manv)
 		{
 			cin.ignore();
-			innv(p->Info);
+			innv(p->Info);      //Tìm nhân viên theo mã và in ra 
 			return;
 		}
 		p = p->next;
@@ -745,15 +712,9 @@ void tinhluongtheoma(NVlist &L, int manv)
 }
 void chuyennhanvien(NVlist &L, int mach, int manv)
 {
-	/*cout << "Nhap ma nhan vien muon chuyen di: ";
-	cin >> manv;
-	cout << "Nhap ma cua hang muon chuyen nhan vien qua: ";
-	cin >> mach;*/
-	L.n--;
 	nv *p = L.head;
 	while (p != NULL)
 	{
-
 		if (p->Info.msnv == manv)
 		{
 			p->Info.msch = mach;
@@ -813,6 +774,7 @@ void xoanhanvienthoiviec(NVlist &L, int manv)
 	{
 		if (p->Info.msnv == manv)
 		{
+			L.n--; //Số nhân viên trong list sẽ giảm xuống 1
 			if (p == L.head) xoanhanviendau(L);
 			else if (p == L.tail) xoanhanviencuoi(L);
 			else
@@ -825,14 +787,9 @@ void xoanhanvienthoiviec(NVlist &L, int manv)
 		q = p;
 		p = p->next;
 	}
-	L.n--;
 }
 void tinhgiolam(NVlist &L, int manv, int h)
 {
-	/*cout << "Nhap ma nhan vien ban muon them gio lam: ";
-	cin >> manv;
-	cout << "So gio lam viec muon them vao: ";
-	cin >> h;*/
 	nv *p = L.head;
 	while (p != NULL)
 	{
@@ -849,35 +806,23 @@ void tinhgiolam(NVlist &L, int manv, int h)
 }
 void nhapnv(NV &a)
 {
-	cout << "Nhap ten nhan vien: ";
+	cout << "      Nhap ten nhan vien: ";
 	cin.ignore();
 	cin.getline(a.ten, 50);
-	cout << "Nhap ma nhan vien: ";
+	cout << "      Nhap ma nhan vien: ";
 	cin >> a.msnv;
-	cout << "Nhap ma so cua hang cua nhan vien: ";
+	cout << "      Nhap ma so cua hang cua nhan vien: ";
 	cin >> a.msch;
-	cout << "Nhap so gio lam viec cua nhan vien trong thang: ";
+	cout << "      Nhap so gio lam viec cua nhan vien trong thang: ";
 	cin >> a.h;
-	cout << "Nhap luong cua nhan vien trong thang do: ";
+	cout << "      Nhap luong cua nhan vien trong thang do: ";
 	cin >> a.luong;
-}
-void nhapNVlist(NVlist &L)
-{
-	NV a;
-	cout << "Nhap so nhan vien cua cua hang: ";
-	cin >> L.n;
-	for (int i = 1; i <= L.n; i++)
-	{
-		cout << "Nhap thong tin nhan vien thu " << i << ":" << endl;
-		nhapnv(a);
-		nv *p = GetNodeNV(a);
-		AddTailNV(L, p);
-		cout << endl;
-	}
 }
 void CreateCHList(CHlist &l)
 {
 	l.head = l.tail = NULL;
+	CreateNVList(l.nvl);
+	CreateKHList(l.tvl);
 }
 ch *GetNodeCH(CH a)
 {
@@ -902,27 +847,6 @@ void AddTailCH(CHlist &L, ch *p)
 		L.tail = p;
 	}
 }
-void nhapCHlist(CHlist &L)
-{
-	cout << "Nhap so cua hang trong chuoi cua hang: ";
-	cin >> L.n;
-	CH a;
-	for (int i = 1; i <= L.n; i++)
-	{
-		cout << "Nhap thong tin cua hang thu " << i << ":" << endl;
-		cout << "Nhap ma cua hang: ";
-		cin >> a.mach;
-		CreateMHList(a.mhl);
-		CreateNVList(a.nvl);
-		cout << endl;
-		nhapMHlist(a.mhl);
-		cout << endl;
-		nhapNVlist(a.nvl);
-		ch *p = GetNodeCH(a);
-		AddTailCH(L, p);
-		cout << endl;
-	}	
-}
 void InCHlist(CHlist L)
 {
 	ch *p = L.head;
@@ -930,13 +854,22 @@ void InCHlist(CHlist L)
 	while (p != NULL)
 	{ 
 		i++;
+		TextColor(12);
 		cout << "Thong tin cua hang thu " << i << endl;
+		TextColor(15);
 		xuatMHlist(p->Info.mhl);
 		cout << endl;
-		inNVlist(p->Info.nvl);
 		cout << endl;
 		p = p->next;
 	}
+	TextColor(14);
+	cout << "Danh sach nhan vien cua chuoi cua hang: " << endl;
+	TextColor(15);
+	inNVlist(L.nvl);
+	TextColor(14);
+	cout << "Danh sach thanh vien cua chuoi cua hang: " << endl;
+	TextColor(15);
+	xuatKHlist(L.tvl);
 }
 void tinhtienthuduoc(CHlist L)
 {
@@ -954,4 +887,259 @@ void tinhtienthuduoc(CHlist L)
 		cout << "So tien cua hang thu: " << p->Info.mach << " thu duoc trong thang la: " << p->Info.income << endl;
 		p = p->next;
 	}
+}
+void TextColor(int color)
+{
+	SetConsoleTextAttribute(consoleHandle, color);
+}
+CHnode* timcuahangtheoma(CHlist L, int n)
+{
+	CHnode *p = L.head;
+	while (p != NULL)
+	{
+		if (p->Info.mach == n) return p;
+		p = p->next;
+	}
+	delete p;
+}
+void Choices(CHlist &L)
+{
+	SetConsoleTextAttribute(consoleHandle, (15 << 4) | 12);  //Tô màu nền cho chữ
+	cout << "\n----------------------------HE THONG QUAN LY CHUOI CUA HANG------------------------" << endl;
+	TextColor(15);
+	cout << "Moi chon vai tro cua ban khi den voi he thong" << endl;
+	TextColor(11);
+	cout << "  1. KHACH HANG" << endl;
+	TextColor(14);
+	cout << "  2. NHAN VIEN" << endl;
+	TextColor(10);
+	cout << "  3. NGUOI QUAN LI CUA HANG" << endl;
+	int n;
+	do
+	{
+		TextColor(15);
+		cout << "Ban chon so may? ";
+		cin >> n;
+		switch (n)
+		{
+		case 1:
+		{
+			int n1;
+			SetConsoleTextAttribute(consoleHandle, (11 << 4) | 0);
+			cout << "******Ban dang den he thong voi tu cach KHACH HANG******\n";
+			TextColor(11);
+			cout << "  1.Tim mat hang theo ten" << endl;
+			cout << "  2.Dang ki thanh vien chuoi cua hang" << endl;
+			TextColor(15);
+			cout << "Chon cong viec ban muon thuc hien: ";
+			cin >> n1;
+			switch (n1)
+			{
+			case 1:
+			{
+				char x[50];
+				int ma;
+				cout << "    Nhap ma cua hang ma ban muon tim mat hang trong do: ";
+				cin >> ma;
+				cout << "    Nhap ten mat hang ban muon tim: ";
+				cin.ignore();
+				cin.getline(x, 100);
+				CHnode *p = timcuahangtheoma(L, ma);
+				int t = timtheoten(p->Info.mhl, x);
+				if (t == 0) cout << "    Mat hang ban can tim khong co!" << endl;
+				break;
+			}
+			case 2:
+			{
+				themthanhvien(L.tvl);
+				xuatKHlist(L.tvl);
+				break;
+			}
+			default: break;
+			}
+			break;
+		}
+		case 2:
+		{
+			int n2;
+			SetConsoleTextAttribute(consoleHandle, (14 << 4) | 0);
+			cout << "******Ban dang den he thong voi tu cach NHAN VIEN******\n";
+			TextColor(14);
+			cout << "  1.Tinh tien cho khach" << endl;
+			cout << "  2.Xem tien luong thang do" << endl;
+			cout << "  3.Tich luy diem cho khach hang" << endl;
+			int ma;
+			TextColor(15);
+			cout << "Chon cong viec ban muon thuc hien: ";
+			cin >> n2;
+			switch (n2)
+			{
+			case 1:
+			{
+				bill a[100];
+				int nb;
+				cout << "    Nhap so mat hang can mua vao: ";
+				cin >> nb;
+				cout << "\n    Nhap bill can tinh vao: " << endl;
+				nhapbill(a, nb);
+				cout << "    Nhap ma cua hang ma ban dang tinh tien: ";
+				cin >> ma;
+				CHnode *p = timcuahangtheoma(L, ma);
+				TextColor(14);
+				cout << "    Chi tiet BILL";
+				TextColor(15);
+				Inbill(a, nb, p->Info.mhl, L.tvl);
+				break;
+			}
+			case 2:
+			{
+				cout << "    Nhap ma so nhan vien cua ban: ";
+				cin >> ma;
+				tinhluongtheoma(L.nvl, ma);
+				break;
+			}
+			default: break;
+			}
+			break;
+		}
+		case 3:
+		{
+			int n3;
+			SetConsoleTextAttribute(consoleHandle, (10 << 4) | 0);
+			cout << "******Ban dang den he thong voi tu cach NGUOI QUAN LI******\n";
+			TextColor(10);
+			cout << "  1. Xem so tien thu duoc tu moi cua hang trong chuoi" << endl;
+			cout << "  2. Tim mon hang co so luong < 5 de nhap them trong cua hang" << endl;
+			cout << "  3. Tim nhan vien co gio lam viec nhieu nhat trong thang de thuong" << endl;
+			cout << "  4. Chuyen nhan vien sang chi nhanh khac" << endl;
+			cout << "  5. Xoa nhan vien thoi viec" << endl;
+			cout << "  6. Tich luy thoi gian lam viec cho nhan vien" << endl;
+			int ma;
+			TextColor(15);
+			cout << "Chon cong viec ban muon thuc hien: ";
+			cin >> n3;
+			switch (n3)
+			{
+			case 1:
+			{
+				tinhtienthuduoc(L);
+				break;
+			}
+			case 2:
+			{
+				cout << "Nhap ma cua hang ma ban dang quan li: ";
+				cin >> ma;
+				CHnode *p = timcuahangtheoma(L, ma);
+				timslnhohon5(p->Info.mhl);
+				break;
+			}
+			case 3:
+			{
+				cout << "Nhap ma cua hang ma ban dang quan li: ";
+				cin >> ma;
+				timnvlamnhieunhat(L.nvl, ma);
+				break;
+			}
+			case 4:
+			{
+				cout << "Nhap ma nhan vien muon chuyen di: ";
+				cin >> ma;
+				int mach;
+				cout << "Nhap ma cua hang muon chuyen nhan vien qua: ";
+				cin >> mach;
+				chuyennhanvien(L.nvl, mach, ma);
+				break;
+			}
+			case 5:
+			{
+				cout << "Nhap ma nhan vien ban muon xoa: ";
+				cin >> ma;
+				xoanhanvienthoiviec(L.nvl, ma);
+				break;
+			}
+			case 6:
+			{
+				cout << "Nhap ma nhan vien ban muon tich luy gio lam: ";
+				cin >> ma;
+				int h;
+				cout << "Nhap so gio lam cua nhan vien ma ban muon tich luy: ";
+				cin >> h;
+				tinhgiolam(L.nvl, ma, h);
+				break;
+			}
+			default: break;
+			}
+			break;
+		}
+		default:
+			cout << "Ban da nhap sai gia tri!" << endl;
+			break;
+		}
+		cout << "*****Nhan ESC de thoat.*****\n";
+		cout << "-----nhan ENTER de tiep tuc chon lai.-----\n";
+	} while (_getch() != 27);
+}
+void nhapCHlist(CHlist &L)
+{
+	SetConsoleTextAttribute(consoleHandle, (15 << 4) | 12); //Tô màu nền cho chữ: nền màu 15, chữ màu 12
+	cout << "Nhap so CUA HANG trong chuoi cua hang: ";
+	cin >> L.n;
+	CH a;
+	TextColor(15);
+	for (int i = 1; i <= L.n; i++)
+	{
+		CreateMHList(a.mhl);         
+		a.mach = i;
+		nhapMHlist("mathang.txt", a.mhl); //Hàm lấy thông tin các mặt hàng của chuỗi cửa hàng đó từ file "mathang.txt"
+		ch *p = GetNodeCH(a); 
+		AddTailCH(L, p);                  //Thêm vào cuối danh sách cửa hàng thông tin cửa hàng vừa lấy
+		cout << endl;
+	}
+	nhapNVlist("nhanvien.txt", L.nvl);   //Lấy thông tin nhân viên từ file "nhanvien.txt"
+	nhapKHlist("khachhang.txt", L.tvl);  //Lấy thông tin khách hàng từ file "khachhang.txt"
+}
+void nhapMHlist(const char *ds, MHlist &L)
+{
+	FILE *fp;
+	fopen_s(&fp, ds, "rt");
+	fscanf_s(fp, "%d\n", &L.n);
+	MH a;
+	for (int i = 1; i <= L.n; i++)
+	{
+		fgets(a.ten, 50, fp);
+		fscanf_s(fp, "%d %d %d %d\n", &a.giatien, &a.mamh, &a.b.slbandau, &a.b.sl);
+		monhang *p = GetNode(a);
+		AddTail(L, p); //Thêm 1 Node mặt hàng vào cuối danh sách
+	}
+	fclose(fp);
+}
+void nhapNVlist(const char *ds, NVlist &L)
+{
+	FILE *fp;
+	fopen_s(&fp, ds, "rt");
+	fscanf_s(fp, "%d\n", &L.n);
+	NV a;
+	for (int i = 1; i <= L.n; i++)
+	{
+		fgets(a.ten, 50, fp);
+		fscanf_s(fp, "%d %d %d %d\n", &a.msnv, &a.msch, &a.h, &a.luong);
+		nv *p = GetNodeNV(a);
+		AddTailNV(L, p);
+	}
+	fclose(fp);
+}
+void nhapKHlist(const char *ds, KHlist &L)
+{
+	FILE *fp;
+	fopen_s(&fp, ds, "rt");
+	fscanf_s(fp, "%d\n", &L.n);
+	KH a;
+	for (int i = 1; i <= L.n; i++)
+	{
+		fgets(a.ten, 50, fp);
+		fscanf_s(fp, "%d %d %d %d %d\n", &a.makh, &a.diemtichluy, &a.ngaysinh.d, &a.ngaysinh.m, &a.ngaysinh.y);
+		kh *p = GetNodeKH(a);
+		AddTailKH(L, p);
+	}
+	fclose(fp);
 }
